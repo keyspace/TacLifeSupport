@@ -24,27 +24,28 @@
  * is purely coincidental.
  */
 
-using KSP.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using KSP.IO;
+using KSP.UI;
+using KSP.UI.Screens;
+using TacDFWrapper; 
 using UnityEngine;
-using TacDFWrapper;
 
 namespace Tac
 {
     class LifeSupportController : MonoBehaviour, Savable
     {
-        private GlobalSettings globalSettings;
-        private TacGameSettings gameSettings;
-        private LifeSupportMonitoringWindow monitoringWindow;
-        private RosterWindow rosterWindow;
-        private ButtonWrapper button;
-        private string configFilename;
-        private bool loadingNewScene = false;
-        private double seaLevelPressure = 101.325;
-        private bool IsDFInstalled = false;
+        ApplicationLauncherButton _appLauncherButton;
+        GlobalSettings globalSettings;
+        TacGameSettings gameSettings;
+        LifeSupportMonitoringWindow monitoringWindow;
+        RosterWindow rosterWindow;
+        string configFilename;
+        bool loadingNewScene = false;
+        double seaLevelPressure = 101.325;
+        bool IsDFInstalled = false;        
 
         void Awake()
         {
@@ -53,16 +54,14 @@ namespace Tac
             gameSettings = TacLifeSupport.Instance.gameSettings;
             rosterWindow = new RosterWindow(globalSettings, gameSettings);
             monitoringWindow = new LifeSupportMonitoringWindow(this, globalSettings, gameSettings, rosterWindow);
-
-            button = new ButtonWrapper(new Rect(Screen.width * 0.75f, 0, 32, 32), "ThunderAerospace/TacLifeSupport/Textures/greenIcon",
-                "LS", "TAC Life Support Monitoring Window", OnIconClicked, "FlightIcon");
-
+            GameEvents.onGUIApplicationLauncherReady.Add(OnGUIAppLauncherReady);
+            OnGUIAppLauncherReady();
             configFilename = IOUtils.GetFilePathFor(this.GetType(), "LifeSupport.cfg");
-            
+
             //Check if DeepFreeze is installed and set bool.
             var DeepFreezeassembly = (from a in AppDomain.CurrentDomain.GetAssemblies()
-                    where a.FullName.StartsWith("DeepFreeze")
-                    select a).FirstOrDefault();
+                            where a.FullName.StartsWith("DeepFreeze")
+                            select a).FirstOrDefault();
             if (DeepFreezeassembly != null)
             {
                 IsDFInstalled = true;
@@ -78,8 +77,6 @@ namespace Tac
             this.Log("Start");
             if (gameSettings.Enabled)
             {
-                button.Visible = true;
-
                 var crew = HighLogic.CurrentGame.CrewRoster.Crew;
                 var knownCrew = gameSettings.knownCrew;
                 foreach (ProtoCrewMember crewMember in crew)
@@ -100,27 +97,57 @@ namespace Tac
             }
             else
             {
-                button.Visible = false;
                 monitoringWindow.SetVisible(false);
                 Destroy(this);
+            }
+        }
+        void OnGUIAppLauncherReady()
+        {
+            if (ApplicationLauncher.Ready && _appLauncherButton == null)
+            {
+                _appLauncherButton = ApplicationLauncher.Instance.AddModApplication(
+                    () => monitoringWindow.SetVisible(true),
+                    () =>
+                    {
+                        monitoringWindow.SetVisible(false);
+                        rosterWindow.SetVisible(false);
+                    },
+                    () => { },
+                    () => { },
+                    () => { },
+                    () => { },
+                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.TRACKSTATION,
+                    GameDatabase.Instance.GetTexture("ThunderAerospace/TacLifeSupport/Textures/greenIcon", false));
             }
         }
 
         void OnDestroy()
         {
             this.Log("OnDestroy");
-            button.Destroy();
 
             GameEvents.onCrewOnEva.Remove(OnCrewOnEva);
             GameEvents.onCrewBoardVessel.Remove(OnCrewBoardVessel);
             GameEvents.onGameSceneLoadRequested.Remove(OnGameSceneLoadRequested);
+            GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIAppLauncherReady);
+            ApplicationLauncher.Instance.RemoveModApplication(_appLauncherButton);
         }
 
         void OnGUI()
         {
-            button?.OnGUI();
-            rosterWindow?.OnGUI();
-            monitoringWindow?.OnGUI();
+            if (rosterWindow != null)
+            {
+                rosterWindow.OnGUI();
+            }
+            if (monitoringWindow != null)
+            {
+                monitoringWindow.OnGUI();
+
+                // Disable app if window was closed
+                if (!monitoringWindow.IsVisible() && _appLauncherButton.toggleButton.CurrentState == UIRadioButton.State.True)
+                {
+                    _appLauncherButton.SetFalse();
+        }
+            }
         }
 
         void FixedUpdate()
@@ -131,7 +158,7 @@ namespace Tac
             }
 
             // If DeepFreeze is installed do DeepFreeze processing to remove frozen kerbals from our list.
-            if (IsDFInstalled)
+            if (IsDFInstalled)  
             {
                 if (!DFWrapper.InstanceExists)  // Check if DFWrapper has been initialized or not. If not try to initialize.
                 {
@@ -144,7 +171,7 @@ namespace Tac
                     DFFrozenKerbals = DFWrapper.DeepFreezeAPI.FrozenKerbals;
                     //Remove any Frozen Kerbals from TAC LS tracking.
                     RemoveFrozenKerbals(DFFrozenKerbals);
-                }
+                }                
             }
 
             double currentTime = Planetarium.GetUniversalTime();
@@ -252,8 +279,8 @@ namespace Tac
             }
         }
 
-        private void RemoveFrozenKerbals(Dictionary<string, DFWrapper.KerbalInfo> DFFrozenKerbals)
-        {
+        void RemoveFrozenKerbals(Dictionary<string, DFWrapper.KerbalInfo> DFFrozenKerbals)
+        {                    
             try
             {
                 foreach (KeyValuePair<string, DFWrapper.KerbalInfo> frznCrew in DFFrozenKerbals)
@@ -272,7 +299,7 @@ namespace Tac
             }
         }
 
-        private void ConsumeResources(double currentTime, Vessel vessel, VesselInfo vesselInfo)
+        void ConsumeResources(double currentTime, Vessel vessel, VesselInfo vesselInfo)
         {
             ConsumeElectricity(currentTime, vessel, vesselInfo);
             ConsumeOxygen(currentTime, vessel, vesselInfo);
@@ -676,21 +703,14 @@ namespace Tac
 
         public void Load(ConfigNode globalNode)
         {
-            button.Load(globalNode);
             monitoringWindow.Load(globalNode);
             rosterWindow.Load(globalNode);
         }
 
         public void Save(ConfigNode globalNode)
         {
-            button.Save(globalNode);
             monitoringWindow.Save(globalNode);
             rosterWindow.Save(globalNode);
-        }
-
-        private void OnIconClicked()
-        {
-            monitoringWindow.ToggleVisible();
         }
 
         private void OnCrewOnEva(GameEvents.FromToAction<Part, Part> action)

@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <Import Project="..\KSPPath.inc" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -40,6 +41,13 @@
     </Reference>
     <Reference Include="KSPUtil">
       <HintPath>..\..\..\KSP_DEV\KSP_Data\Managed\KSPUtil.dll</HintPath>
+      <HintPath>$(KSP)\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="KSPCore">
+      <HintPath>$(KSP)\KSP_Data\Managed\KSPCore.dll</HintPath>
+    </Reference>
+    <Reference Include="KSPUtil">
+      <HintPath>$(KSP)\KSP_Data\Managed\KSPUtil.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -52,6 +60,10 @@
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\KSP_DEV\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>$(KSP)\KSP_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(KSP)\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -102,6 +114,10 @@
     <Compile Include="GlobalSettings.cs" />
     <Compile Include="VesselInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\TacLib\Source\CommonProperties.proj" />
   <PropertyGroup>
@@ -125,6 +141,11 @@
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
+    <!--PostBuildEvent>
+      "$(BaseDir)\packages\Mono.pdb2mdb.0.1.0.20130128\tools\pdb2mdb.exe" "$(TargetFileName)"
+      xcopy /Y "$(TargetPath)" "$(KSP)\GameData\ThunderAerospace\TacLifeSupport"
+      xcopy /Y "$(TargetDir)$(TargetName).pdb" "$(KSP)\GameData\ThunderAerospace\TacLifeSupport"
+      xcopy /Y "$(TargetDir)$(TargetName).dll.mdb" "$(KSP)\GameData\ThunderAerospace\TacLifeSupport"</PostBuildEvent-->
   </PropertyGroup>
   <Target Name="BeforeBuild">
     <CallTarget Targets="GitInfo" />
