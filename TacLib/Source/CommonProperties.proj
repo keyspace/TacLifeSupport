@@ -22,7 +22,7 @@
     <AssemblyRevision>$(AssemblyFileRevision)</AssemblyRevision>
   </PropertyGroup>
 
-  <Target Name="GitInfoWindows">
+  <Target Name="GitInfo">
     <!-- Get the current git SHA1 -->
     <Exec Command="git log -1 --format='%%h'" ConsoleToMSBuild="true" EchoOff="true" WorkingDirectory="$(BaseDir)\">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitSHA" />
@@ -58,7 +58,7 @@
     <CallTarget Targets="CopyToTest" />
   </Target>
 
-  <Target Name="WriteVersionFileWindows">
+  <Target Name="WriteVersionFile">
     <!-- Write the version file -->
     <ItemGroup>
       <OldVersionFiles Include="$(BaseDir)\GameData\ThunderAerospace\$(ProjectName)_*.txt" />
@@ -67,7 +67,7 @@
     <WriteLinesToFile File="$(BaseDir)\GameData\ThunderAerospace\$(ProjectName)_v$(MaxAssemblyFileVersion).txt" Lines="You have installed the $(ModName), version $(MaxAssemblyFileVersion) ($(GitSHA)+$(GitSHA2) $(GitStatus)).&#xD;&#xA;&#xD;&#xA;See the Readme.txt and LICENSE.txt files for more information." Overwrite="true" Encoding="UTF-8" />
   </Target>
 
-  <Target Name="WriteAvcVersionWindows">
+  <Target Name="WriteAvcVersion">
     <!-- Write the .version file for KSP-AVC, http://forum.kerbalspaceprogram.com/threads/79745 -->
     <PropertyGroup>
       <AVCFile>$(BaseDir)\GameData\ThunderAerospace\$(ProjectName)\Plugins\$(ProjectName).version</AVCFile>
@@ -82,8 +82,7 @@
   <Target Name="CopyToTest">
     <!-- Copy to the test directory -->
     <Warning Condition="'$(KSP_TEST)' == ''" Text="The environment variable KSP_TEST is not set!" />
-    <Exec Command="test.bat" WorkingDirectory="$(BaseDir)\" IgnoreExitCode="true" Condition="'$(KSP_TEST)' != '' AND '$(OS)' == 'Windows_NT'" />
-    <!-- TODO: Linux exec? -->
+    <Exec Command="test.bat" WorkingDirectory="$(BaseDir)\" IgnoreExitCode="true" Condition="'$(KSP_TEST)' != ''" />
   </Target>
   
   <Target Name="Package" DependsOnTargets="Rebuild">
