@@ -1,6 +1,6 @@
 ﻿/**
  * Based on the InstallChecker from the Kethane mod for Kerbal Space Program.
- * https://github.com/Majiir/Kethane/blob/b93b1171ec42b4be6c44b257ad31c7efd7ea1702/Plugin/InstallChecker.cs
+ * https://github.com/Majiir/Kethane/blob/5a1df504ee8d1d5c15a152f1cb0bc9f7b8cbfa06/Plugin/Kethane/Utilities/InstallChecker.cs
  * 
  * Original is (C) Copyright Majiir.
  * CC0 Public Domain (http://creativecommons.org/publicdomain/zero/1.0/)
@@ -20,8 +20,8 @@ namespace Tac
     internal class InstallChecker : MonoBehaviour
     {
         private const string modName = "TAC Life Support";
-        private const string expectedPath = "GameData/ThunderAerospace/TacLifeSupport";
-		private const string expectedDLLPath = expectedPath + "/Plugins";
+        private const string expectedPath = "ThunderAerospace/TacLifeSupport";
+        private const string expectedDLLPath = expectedPath + "/Plugins";
 
         protected void Start()
         {
@@ -41,7 +41,7 @@ namespace Tac
                     string badPathsString = String.Join("\n", badPaths.ToArray());
                     this.Log(modName + " - Incorrectly installed, bad paths:\n" + badPathsString);
                     PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), "Incorrect " + modName + " Installation",
-						modName + " has been installed incorrectly and will not function properly. All files should be located in " + expectedPath + ", with the DLL file in " + expectedDLLPath + ". Do not move any files from inside that folder.\n\nIncorrect path(s):\n" + badPathsString,
+						modName + " has been installed incorrectly and will not function properly. All files should be located in GameData/" + expectedPath + ", with the DLL file in GameData/" + expectedDLLPath + ". Do not move any files from inside that folder.\n\nIncorrect path(s):\n" + badPathsString,
                         "OK", false, HighLogic.UISkin);
                 }
 
